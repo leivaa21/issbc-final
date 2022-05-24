@@ -7,4 +7,4 @@ deps:
 	@python3 -m venv env
 	@pip install -r requirements.txt
 run:
-	@python3 ./main.py
+	@python3 ./src/main.py

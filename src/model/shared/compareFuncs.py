@@ -1,5 +1,6 @@
 def isEqual(meassure, expected) -> bool:
-  return meassure == expected
+    return meassure == expected
+
 
 def isInRange(meassure: float, start: float, end: float) -> bool:
-  return (meassure >= start and meassure <= end)
+    return (meassure >= start and meassure <= end)

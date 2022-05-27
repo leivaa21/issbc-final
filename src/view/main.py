@@ -1,6 +1,7 @@
 from os import path
-from PyQt5.QtWidgets import QWidget, QDesktopWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QLabel, QListWidget, QListWidgetItem, QPushButton
-from PyQt5.QtGui import QIcon
+from types import NoneType
+from PyQt5.QtWidgets import QWidget, QDesktopWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QLineEdit, QComboBox
+from PyQt5.QtGui import QIcon, QIntValidator, QDoubleValidator
 from view.components.domainSelectorDialog import DomainDialog
 
 from controller.domain import DomainController
@@ -58,41 +59,117 @@ class AppWindow(QWidget):
 
     def __main_app_layout(self):
         MainAppLayout = QHBoxLayout()
-        self.__init_case_list()
+        self.__case_list = QListWidget()
+        self.__show_cases_on_list()
         MainAppLayout.addWidget(self.__case_list, 3)
         MainAppLayout.addLayout(self.__options_widget(), 7)
         return MainAppLayout
 
-    def __init_case_list(self):
-        self.__case_list = QListWidget()
-        QListWidgetItem(self.__domain_controller._domain +
-                        ' Item1', self.__case_list)
-        QListWidgetItem(self.__domain_controller._domain +
-                        ' Item2', self.__case_list)
-        QListWidgetItem(self.__domain_controller._domain +
-                        ' Item3', self.__case_list)
+    def __show_cases_on_list(self):
+        self.__case_list.clear()
+        for case in self.__storage_controller.getCases():
+            QListWidgetItem(case.identificator(), self.__case_list)
 
     def __options_widget(self):
         optionsLayout = QVBoxLayout()
 
-        topOptionsLayout = QHBoxLayout()
-        topOptionsLayout.addWidget(QPushButton('Añadir caso'))
-        topOptionsLayout.addWidget(QPushButton('Eliminar caso'))
-        topOptionsLayout.addWidget(QPushButton('Valorar seleccionado'))
-        topOptionsLayout.addWidget(QPushButton('Valorar todos'))
-
+        topOptionsLayout = self.__generate_top_options()
         optionsLayout.addLayout(topOptionsLayout, 2)
 
         formLayout = self.__generate_case_form()
-
         optionsLayout.addLayout(formLayout, 8)
 
         return optionsLayout
 
+    def __generate_top_options(self):
+        topOptionsLayout = QHBoxLayout()
+
+        addCaseBtn = QPushButton('Añadir caso')
+
+        def addCaseBtnAction():
+            def formatFormField(FieldWidget):
+                fieldType = type(FieldWidget).__name__
+                fieldValue = ''
+                if fieldType == 'QLineEdit':
+                    fieldValue = FieldWidget.text()
+                if fieldType == 'QComboBox':
+                    fieldValue = bool(FieldWidget.currentText())
+                return fieldValue
+            i = 0
+            params = {}
+
+            for i in range(self.__form_layout.rowCount()):
+                Label = self.__form_layout.itemAt(
+                    i, QFormLayout.LabelRole).widget().text()
+                FieldWidget = self.__form_layout.itemAt(
+                    i, QFormLayout.FieldRole).widget()
+                FieldValue = formatFormField(FieldWidget)
+                if str(FieldValue) == '':
+                    # Error
+                    print('Not all params were given!')
+                    return
+                params[Label] = FieldValue
+
+            case = self.__domain_controller.generateCase(params)
+            self.__storage_controller.saveOne(case)
+            self.__show_cases_on_list()
+
+        addCaseBtn.clicked.connect(addCaseBtnAction)
+        topOptionsLayout.addWidget(addCaseBtn)
+
+        deleteCaseBtn = QPushButton('Eliminar caso seleccionado')
+
+        def deleteCaseBtnAction():
+            if type(self.__case_list.currentItem()) != NoneType:
+                selectedCaseIdentificator = self.__case_list.currentItem().text()
+                self.__storage_controller.removeCase(selectedCaseIdentificator)
+                self.__show_cases_on_list()
+
+        deleteCaseBtn.clicked.connect(deleteCaseBtnAction)
+        topOptionsLayout.addWidget(deleteCaseBtn)
+
+        valueOneBtn = QPushButton('Valorar seleccionado')
+
+        def valueOneBtnAction():
+            if type(self.__case_list.currentItem()) != NoneType:
+                pass
+
+        valueOneBtn.clicked.connect(valueOneBtnAction)
+        topOptionsLayout.addWidget(valueOneBtn)
+
+        valueAllBtn = QPushButton('Valorar todos')
+
+        def valueAllBtnAction():
+            pass
+
+        valueAllBtn.clicked.connect(valueAllBtnAction)
+        topOptionsLayout.addWidget(valueAllBtn)
+
+        return topOptionsLayout
+
     def __generate_case_form(self):
         print('Generating form for domain: ' +
               self.__domain_controller._domain)
-        return QFormLayout()
+        paramsDic = self.__domain_controller.getDomainParamsDict().items()
+        self.__form_layout = QFormLayout()
+        for key, val in paramsDic:
+            self.__add_row(key, val)
+        return self.__form_layout
+
+    def __add_row(self, label, paramType):
+        inputField = QLineEdit()
+
+        if paramType == 'int':
+            inputField.setValidator(QIntValidator())
+
+        if paramType == 'float':
+            inputField.setValidator(QDoubleValidator())
+
+        if paramType == 'bool':
+            inputField = QComboBox()
+            inputField.addItems(['True', 'False'])
+
+        return self.__form_layout.addRow(label, inputField)
 
     def __show_domain_dialog(self):
         dlg = DomainDialog()

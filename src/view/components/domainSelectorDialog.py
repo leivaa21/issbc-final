@@ -15,15 +15,22 @@ class DomainDialog(QDialog):
         self.setWindowTitle("Selector de dominio")
 
         self.buttonBox = QDialogButtonBox()
-        for domain in domainList:
-            button = QPushButton('Dominio = ' + domain)
+        button1 = QPushButton('Dominio = ' + domainList[0])
 
-            def setDomain():
-                self.response = domain
-                self.accept()
+        def setDomainFootball():
+            self.response = domainList[0]
+            self.accept()
+        button1.clicked.connect(setDomainFootball)
+        self.buttonBox.addButton(button1, QDialogButtonBox.ActionRole)
 
-            button.clicked.connect(setDomain)
-            self.buttonBox.addButton(button, QDialogButtonBox.ActionRole)
+        button2 = QPushButton('Dominio = ' + domainList[1])
+
+        def setDomainF1():
+            self.response = domainList[1]
+            self.accept()
+        button2.clicked.connect(setDomainF1)
+
+        self.buttonBox.addButton(button2, QDialogButtonBox.ActionRole)
 
         self.layout = QVBoxLayout()
         message = QLabel("Selecciona el dominio:")

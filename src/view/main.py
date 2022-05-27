@@ -1,12 +1,13 @@
 from os import path
 from types import NoneType
-from PyQt5.QtWidgets import QWidget, QDesktopWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QLineEdit, QComboBox
+from PyQt5.QtWidgets import QWidget, QDesktopWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QLineEdit, QComboBox, QCheckBox
 from PyQt5.QtGui import QIcon, QIntValidator, QDoubleValidator
 from view.components.domainSelectorDialog import DomainDialog
 
 from controller.domain import DomainController
 from controller.evalue import EvaluatorController
 from controller.storage import StorageController
+from view.components.informResponseDialog import InformResponseDialog
 
 
 class AppWindow(QWidget):
@@ -40,7 +41,6 @@ class AppWindow(QWidget):
         self.setWindowTitle(
             'ISSBC TFP - Valorar - i92leroa | i92loden | i92arcaj')
         icon_path = path.dirname(__file__) + '/../../images/icon.ico'
-        print(icon_path)
         self.setWindowIcon(QIcon(icon_path))
 
     def __set_layout__(self):
@@ -77,7 +77,8 @@ class AppWindow(QWidget):
         optionsLayout.addLayout(topOptionsLayout, 2)
 
         formLayout = self.__generate_case_form()
-        optionsLayout.addLayout(formLayout, 8)
+        optionsLayout.addLayout(formLayout, 6)
+        optionsLayout.addLayout(self.__rule_selector_layout(), 2)
 
         return optionsLayout
 
@@ -93,7 +94,7 @@ class AppWindow(QWidget):
                 if fieldType == 'QLineEdit':
                     fieldValue = FieldWidget.text()
                 if fieldType == 'QComboBox':
-                    fieldValue = bool(FieldWidget.currentText())
+                    fieldValue = FieldWidget.currentText()
                 return fieldValue
             i = 0
             params = {}
@@ -120,10 +121,11 @@ class AppWindow(QWidget):
         deleteCaseBtn = QPushButton('Eliminar caso seleccionado')
 
         def deleteCaseBtnAction():
-            if type(self.__case_list.currentItem()) != NoneType:
-                selectedCaseIdentificator = self.__case_list.currentItem().text()
-                self.__storage_controller.removeCase(selectedCaseIdentificator)
-                self.__show_cases_on_list()
+            if type(self.__case_list.currentItem()) == NoneType:
+                return
+            selectedCaseIdentificator = self.__case_list.currentItem().text()
+            self.__storage_controller.removeCase(selectedCaseIdentificator)
+            self.__show_cases_on_list()
 
         deleteCaseBtn.clicked.connect(deleteCaseBtnAction)
         topOptionsLayout.addWidget(deleteCaseBtn)
@@ -131,8 +133,17 @@ class AppWindow(QWidget):
         valueOneBtn = QPushButton('Valorar seleccionado')
 
         def valueOneBtnAction():
-            if type(self.__case_list.currentItem()) != NoneType:
-                pass
+            if type(self.__case_list.currentItem()) == NoneType:
+                return
+            selectedCaseIdentificator = self.__case_list.currentItem().text()
+            ruleApplyArray = [
+                self.__rule1_checkBox.isChecked(),
+                self.__rule2_checkBox.isChecked(),
+                self.__rule3_checkBox.isChecked()
+            ]
+            evaluation = self.__evaluator_controller.evalueOne(
+                selectedCaseIdentificator, ruleApplyArray)
+            self.__display_inform_dialog(evaluation)
 
         valueOneBtn.clicked.connect(valueOneBtnAction)
         topOptionsLayout.addWidget(valueOneBtn)
@@ -140,12 +151,25 @@ class AppWindow(QWidget):
         valueAllBtn = QPushButton('Valorar todos')
 
         def valueAllBtnAction():
-            pass
+            if self.__storage_controller.getCases().__len__() == 0:
+                return
+            ruleApplyArray = [
+                self.__rule1_checkBox.isChecked(),
+                self.__rule2_checkBox.isChecked(),
+                self.__rule3_checkBox.isChecked()
+            ]
+            evaluation = self.__evaluator_controller.evalueAll(ruleApplyArray)
+            self.__display_inform_dialog(evaluation)
 
         valueAllBtn.clicked.connect(valueAllBtnAction)
         topOptionsLayout.addWidget(valueAllBtn)
 
         return topOptionsLayout
+
+    def __display_inform_dialog(self, evaluation):
+        inform_dlg = InformResponseDialog(evaluation)
+        inform_dlg.exec()
+        pass
 
     def __generate_case_form(self):
         print('Generating form for domain: ' +
@@ -170,6 +194,18 @@ class AppWindow(QWidget):
             inputField.addItems(['True', 'False'])
 
         return self.__form_layout.addRow(label, inputField)
+
+    def __rule_selector_layout(self):
+        ruleSelectorLayout = QHBoxLayout()
+        ruleSelectorLayout.addWidget(
+            QLabel('Selecciona las reglas a evaluar:'))
+        self.__rule1_checkBox = QCheckBox('Rule 1')
+        self.__rule2_checkBox = QCheckBox('Rule 2')
+        self.__rule3_checkBox = QCheckBox('Rule 3')
+        ruleSelectorLayout.addWidget(self.__rule1_checkBox)
+        ruleSelectorLayout.addWidget(self.__rule2_checkBox)
+        ruleSelectorLayout.addWidget(self.__rule3_checkBox)
+        return ruleSelectorLayout
 
     def __show_domain_dialog(self):
         dlg = DomainDialog()

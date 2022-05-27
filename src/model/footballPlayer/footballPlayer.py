@@ -1,4 +1,5 @@
 import string
+from model.shared.helpers import str_to_bool
 
 
 class footballPlayer:
@@ -10,16 +11,17 @@ class footballPlayer:
             self,
             float(params['oxigenAerobic']),
             float(params['oxigenAnaerobic']),
-            bool(params['passedCardio'] != True)
+            str_to_bool(params['passedCardio']) != True
         )
+
         self.cardioRespiratoryTest = CardioRespiratoryTest(
             self,
-            bool(params['passedCardio'])
+            str_to_bool(params['passedCardio'])
         )
         self.bloodAndUrineTest = BloodAndUrineTest(
             self,
-            bool(params['doping']),
-            bool(params['suspiciousSubstances'])
+            str_to_bool(params['doping']),
+            str_to_bool(params['suspiciousSubstances'])
         )
         self.anthropometricMeasurementTest = AnthropometricMeasurementTest(
             self,
@@ -30,6 +32,7 @@ class footballPlayer:
 
     def identificator(self):
         return self.name
+
 
 # General Test
 
@@ -45,7 +48,7 @@ class MedicTest:
 
 class EffortTest(MedicTest):
     def __init__(self, player: footballPlayer, oxigenAerobic: float, oxigenAnaerobic: float, hasCardioProblems: bool):
-        super().__init__('EffortTest', player)
+        super().__init__('Effort Test', player)
         self.oxigenAerobic = oxigenAerobic
         self.oxigenAnaerobic = oxigenAnaerobic
         self.hasCardioProblems = hasCardioProblems
@@ -53,20 +56,20 @@ class EffortTest(MedicTest):
 
 class CardioRespiratoryTest(MedicTest):
     def __init__(self, player: footballPlayer, hasPassed: bool):
-        super().__init__('EffortTest', player)
+        super().__init__('Cardio Respiratory', player)
         self.hasPassed = hasPassed
 
 
 class BloodAndUrineTest(MedicTest):
     def __init__(self, player: footballPlayer, doping: bool, suspiciousSubstances: bool):
-        super().__init__('EffortTest', player)
+        super().__init__('Blood And Urine', player)
         self.doping = doping
         self.suspiciousSubstances = suspiciousSubstances
 
 
 class AnthropometricMeasurementTest(MedicTest):
     def __init__(self, player: footballPlayer, weightInKg: float, heightInCm: int, mmi: float):
-        super().__init__('EffortTest', player)
+        super().__init__('Anthropometric Measurement', player)
         self.height = heightInCm
         self.weight = weightInKg
         self.mmi = mmi

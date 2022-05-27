@@ -1,5 +1,6 @@
 from array import array
 import importlib
+from types import NoneType
 from controller.storage import StorageController
 from controller.domain import DomainController
 
@@ -10,7 +11,6 @@ class EvaluatorController:
         self.storageController = storage
 
     def evalueAll(self, applyArray: array):
-        index = 1
         res = {}
         for case in self.storageController.getCases():
             res[case.identificator()] = {}
@@ -19,6 +19,19 @@ class EvaluatorController:
                     rulename = 'rule' + str(index + 1)
                     res[case.identificator()][rulename] = self.__evalueRuleInCase(
                         case, index + 1)
+        return res
+
+    def evalueOne(self, identificator, applyArray: array):
+        case = self.storageController.getOne(identificator)
+        if type(case) == NoneType:
+            return
+        res = {}
+        res[case.identificator()] = {}
+        for index in range(3):
+            if applyArray[index]:
+                rulename = 'rule' + str(index + 1)
+                res[case.identificator()][rulename] = self.__evalueRuleInCase(
+                    case, index + 1)
         return res
 
     def __evalueRuleInCase(self, case, ruleIndex) -> bool:

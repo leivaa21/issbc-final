@@ -23,3 +23,8 @@ class DomainController:
         module = importlib.import_module(module_name)
         class_name = self._domain
         return getattr(module, class_name)
+
+    def getDomainParamsDict(self):
+        module_name = "model." + self._domain + ".params"
+        module = importlib.import_module(module_name)
+        return getattr(module, 'paramsMap')
